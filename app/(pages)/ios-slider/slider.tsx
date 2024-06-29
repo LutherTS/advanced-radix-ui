@@ -8,27 +8,29 @@ export default function SliderComponent({ name }: { name?: string }) {
   let [isGrabbing, setIsGrabbing] = useState(false);
 
   return (
-    <div className="flex h-5 flex-col justify-center">
-      <div className="group flex items-center gap-x-3 duration-[350ms] *:duration-[350ms]">
-        <Icons.SpeakerXMark className="size-[25px] text-gray-400 hover:!text-white group-hover:text-gray-200 group-hover:transition" />
-        <Slider.Root
-          name={name}
-          defaultValue={[50]}
-          className="relative flex h-2 grow items-center transition-[height] hover:h-5"
-        >
-          <Slider.Track
-            className="relative h-full grow overflow-hidden rounded-full bg-gray-700 *:bg-gray-400 *:transition-colors *:hover:!bg-white *:group-hover:bg-gray-200"
-            style={{ cursor: isGrabbing ? "grabbing" : "grab" }}
-            onPointerDown={() => setIsGrabbing(true)}
-            onPointerUp={() => setIsGrabbing(false)}
+    <>
+      <div className="flex h-5 flex-col justify-center">
+        <div className="group flex items-center gap-x-3 duration-[350ms] *:duration-[350ms]">
+          <Icons.SpeakerXMark className="size-[25px] touch-none select-none text-gray-400 hover:!text-white group-hover:text-gray-200 group-hover:transition" />
+          <Slider.Root
+            name={name}
+            defaultValue={[50]}
+            className="relative flex h-2 grow items-center transition-[height] hover:h-5"
           >
-            <Slider.Range className="absolute h-full" />
-          </Slider.Track>
-          <Slider.Thumb className="opacity-0" />
-        </Slider.Root>
-        <Icons.SpeakerWave className="size-[25px] text-gray-400 hover:!text-white group-hover:text-gray-200 group-hover:transition" />
+            <Slider.Track
+              className="relative h-full grow overflow-hidden rounded-full bg-gray-700 *:bg-gray-400 *:transition-colors *:hover:!bg-white *:group-hover:bg-gray-200"
+              style={{ cursor: isGrabbing ? "grabbing" : "grab" }}
+              onPointerDown={() => setIsGrabbing(true)}
+              onPointerUp={() => setIsGrabbing(false)}
+            >
+              <Slider.Range className="absolute h-full" />
+            </Slider.Track>
+            <Slider.Thumb className="opacity-0" />
+          </Slider.Root>
+          <Icons.SpeakerWave className="size-[25px] text-gray-400 hover:!text-white group-hover:text-gray-200 group-hover:transition" />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -40,4 +42,10 @@ The bug goes a lot deeper: https://buildui.com/recipes/elastic-slider. This is s
 Removed hover:cursor-grab active:cursor-grabbing because active:cursor-grabbing not working.
 OK. Scale is not height, only visual. So the container was still the h-5 of size-5 from the icons. 
 Problems. Solved. Except for this ONE pixel at the bottom of the slider.
+I'll add the buttons on the icons at the end, since they require controlling the input.
+So it's not a height issue.
+Even scale doesn't fix this.
+I'll have to believe it's a Radix issue, I could talk about it in the chat. Or I'll just keep it also for the lesson's end.
+...
+I'll have to deploy to try this on mobile.
 */
