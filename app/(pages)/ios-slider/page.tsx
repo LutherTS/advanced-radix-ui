@@ -1,8 +1,13 @@
 "use client";
 
+import { useState } from "react";
+
 import Slider from "./slider";
 
 export default function iOSSliderPage() {
+  let [volume, setVolume] = useState(60);
+  console.log({ volume });
+
   return (
     <main className="flex h-screen items-center justify-center bg-black text-white">
       <div className="mx-auto w-full max-w-xs">
@@ -13,7 +18,11 @@ export default function iOSSliderPage() {
           className="space-y-8 rounded"
         >
           <p className="text-sm font-medium text-white/80">Settings</p>
-          <Slider name="slidervalue" />
+          <Slider
+            name="slidervalue"
+            definedValue={volume}
+            definedOnValueChange={setVolume}
+          />
           {/* <input type="range" name="myslider" className="w-full" /> */}
           <div className="mt-5 flex items-center justify-between">
             <button

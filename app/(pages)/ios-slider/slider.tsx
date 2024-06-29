@@ -2,12 +2,58 @@
 
 import * as Slider from "@radix-ui/react-slider";
 import * as Icons from "./icons";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
-export default function SliderComponent({ name }: { name?: string }) {
-  let [value, setValue] = useState([50]);
+const clamp = (newValue: number, min: number, max: number) =>
+  Math.min(Math.max(newValue, min), max);
+
+// need to understand
+const roundToStep = (clampedValue: number, step: number) => {
+  const inverseStep = 1 / step;
+  return Math.round(clampedValue * inverseStep) / inverseStep;
+};
+
+export default function SliderComponent({
+  name,
+  min = 0,
+  max = 100,
+  step = 1,
+  definedValue = 50,
+  definedOnValueChange = () => {},
+}: {
+  name?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  definedValue?: number;
+  definedOnValueChange?: Dispatch<SetStateAction<number>>;
+}) {
+  let [value, setValue] = useState(definedValue);
+
   let [isGrabbing, setIsGrabbing] = useState(false);
   let [isUsingPointer, setisUsingPointer] = useState(false);
+  // let [stash, setStash] = useState({clientX: 0, value});
+  let [startingClientX, setStartingClientX] = useState(0);
+  let [startingValue, setStartingValue] = useState(value);
+
+  let [myStash, setMyStash] = useState({
+    previousDiffPerUnit: 0,
+    currentDiffPerUnit: 0,
+    previousRealDiffPerUnit: 0,
+    currentRealDiffPerUnit: 0,
+  });
+
+  let [myDiffies, setMyDiffies] = useState({
+    previousDiffyPerUnit: 0,
+    currentDiffyPerUnit: 0,
+    previousRealDiffyPerUnit: 0,
+    currentRealDiffyPerUnit: 0,
+  });
+
+  const updateValue = (providedValue: number) => {
+    setValue(providedValue);
+    definedOnValueChange(providedValue);
+  };
 
   return (
     <>
@@ -15,32 +61,110 @@ export default function SliderComponent({ name }: { name?: string }) {
         <div className="group flex items-center gap-x-3 duration-200">
           <button
             type="button"
-            onClick={() => setValue([0])}
+            onClick={() => updateValue(min)}
             className="group/speakerx *:text-gray-400 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 group-hover:*:text-gray-200"
           >
             <Icons.SpeakerXMark
               className="size-[25px] hover:!text-white group-focus-visible/speakerx:text-white"
               style={{
-                color:
-                  value.length === 1 && value[0] === 0 ? "white" : undefined,
+                color: value === 0 ? "white" : undefined,
               }}
             />
           </button>
           <Slider.Root
             name={name}
             // defaultValue={[50]}
-            value={value}
-            onValueChange={(value) => setValue(value)}
-            className="group/slider relative flex h-2 grow touch-none select-none items-center transition-[height] duration-200 hover:h-5"
+            value={[value]}
+            onValueCommit={([value]) => {
+              if (!isUsingPointer) updateValue(value);
+            }}
+            className="group/slider relative flex h-2 grow touch-none select-none items-center transition-[height] duration-200 group-hover:h-5"
+            min={min}
+            max={max}
+            step={step}
           >
             <Slider.Track
               className={`relative h-full grow overflow-hidden rounded-full bg-gray-700 *:bg-gray-400 *:transition-colors *:duration-200 *:hover:!bg-white *:group-hover:bg-gray-200 ${isUsingPointer ? "" : "group-has-[:focus-visible]/slider:outline group-has-[:focus-visible]/slider:outline-2 group-has-[:focus-visible]/slider:outline-offset-2 group-has-[:focus-visible]/slider:outline-sky-500 group-has-[:focus-visible]/slider:*:bg-white"}`}
               style={{
                 cursor: isGrabbing ? "grabbing" : "grab",
               }}
-              onPointerDown={() => {
+              onPointerDown={(event) => {
                 setIsGrabbing(true);
                 setisUsingPointer(true);
+
+                // setStash({clientX: event.clientX, value})
+                setStartingClientX(event.clientX);
+                setStartingValue(value);
+              }}
+              onPointerMove={(event) => {
+                if (event.buttons > 0) {
+                  let diffInPixels = event.clientX - startingClientX;
+                  let sliderWidth = event.currentTarget.clientWidth;
+                  let pixelsPerUnit = (max - min) / sliderWidth;
+                  let diffPerUnit = diffInPixels * pixelsPerUnit; // clamp needs be here
+
+                  let realDiffPerUnit = clamp(
+                    diffPerUnit,
+                    min - startingValue,
+                    max - startingValue,
+                  ); // that puts me halfway there
+                  // console.log({ diffPerUnit, realDiffPerUnit });
+
+                  setMyStash({
+                    ...myStash,
+                    previousDiffPerUnit: myStash.currentDiffPerUnit,
+                    currentDiffPerUnit: diffPerUnit,
+                  });
+                  console.log({
+                    previousDiffPerUnit: myStash.previousDiffPerUnit,
+                    currentDiffPerUnit: myStash.currentDiffPerUnit,
+                  });
+                  setMyDiffies({
+                    ...myDiffies,
+                    previousDiffyPerUnit:
+                      myDiffies.currentDiffyPerUnit === 0
+                        ? myDiffies.previousDiffyPerUnit
+                        : Math.sign(myDiffies.currentDiffyPerUnit),
+                    currentDiffyPerUnit:
+                      myStash.currentDiffPerUnit -
+                        myStash.previousDiffPerUnit ===
+                      0
+                        ? myDiffies.currentDiffyPerUnit
+                        : Math.sign(
+                            myStash.currentDiffPerUnit -
+                              myStash.previousDiffPerUnit,
+                          ),
+                  });
+                  console.log({
+                    previousDiffyPerUnit: myDiffies.previousDiffyPerUnit,
+                    currentDiffyPerUnit: myDiffies.currentDiffyPerUnit,
+                  });
+
+                  // I want the previous diffPerUnit, and the current diffPerUnit
+                  // then I want the diff between them
+                  // then if we're outside the bounds and their diff changes direction, we're redefining the startValue
+
+                  let newValue = startingValue + realDiffPerUnit;
+                  let clampedValue = clamp(newValue, min, max);
+                  let steppedValue = roundToStep(clampedValue, step);
+                  updateValue(steppedValue);
+
+                  if (
+                    (steppedValue === min &&
+                      myDiffies.previousDiffyPerUnit !==
+                        myDiffies.currentDiffyPerUnit &&
+                      myDiffies.currentDiffyPerUnit === 1) ||
+                    (steppedValue === max &&
+                      myDiffies.previousDiffyPerUnit !==
+                        myDiffies.currentDiffyPerUnit &&
+                      myDiffies.currentDiffyPerUnit === -1)
+                  ) {
+                    console.log("Yes.");
+                    setStartingClientX(event.clientX);
+                    setStartingValue(steppedValue);
+                  }
+                  // YES.
+                }
               }}
               onPointerUp={() => setIsGrabbing(false)}
             >
@@ -55,14 +179,13 @@ export default function SliderComponent({ name }: { name?: string }) {
           </Slider.Root>
           <button
             type="button"
-            onClick={() => setValue([100])}
+            onClick={() => updateValue(max)}
             className="group/speakerwave *:text-gray-400 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 group-hover:*:text-gray-200"
           >
             <Icons.SpeakerWave
               className="size-[25px] hover:!text-white group-focus-visible/speakerwave:text-white"
               style={{
-                color:
-                  value.length === 1 && value[0] === 100 ? "white" : undefined,
+                color: value === 100 ? "white" : undefined,
               }}
             />
           </button>
@@ -90,4 +213,7 @@ The focus is on the thumb because there can be multiple thumbs, and each should 
 Transition durations and other transition properties as unconditional.
 Other than that, honestly, my focus-visible issue is rather negligeable and I should move on in the lesson.
 So glad to know that this focus-visible issue is a problem due to the browser's user agent, and to be fair to Radix itself.
+Previous code: value.length === 1 && value[0] === 100 ? "white" : undefined
+...
+Let. Him. Cook.
 */
