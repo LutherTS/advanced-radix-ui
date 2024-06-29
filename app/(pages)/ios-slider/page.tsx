@@ -8,17 +8,17 @@ export default function iOSSliderPage() {
       <div className="mx-auto w-full max-w-xs">
         <form
           action={(formData: FormData) => {
-            alert(formData.get("slidervalue"));
+            alert(`slidervalue: ${formData.get("slidervalue")}`);
           }}
           className="space-y-8 rounded"
         >
-          <p className="text-sm font-medium text-white/60">Settings</p>
+          <p className="text-sm font-medium text-white/80">Settings</p>
           <Slider name="slidervalue" />
-          <input type="range" name="myslider" className="w-full" />
+          {/* <input type="range" name="myslider" className="w-full" /> */}
           <div className="mt-5 flex items-center justify-between">
             <button
               type="submit"
-              className="bg-white/[.15] px-3 py-1 text-sm font-semibold text-white"
+              className="rounded bg-white/[.15] px-3 py-1 text-sm font-semibold text-white text-white/90 transition-colors hover:text-white focus-visible:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
             >
               Save
             </button>
