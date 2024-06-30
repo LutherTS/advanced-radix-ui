@@ -1,8 +1,14 @@
 "use client";
 
+import {
+  Dispatch,
+  SetStateAction,
+  // useEffect,
+  useState,
+} from "react";
+
 import * as Slider from "@radix-ui/react-slider";
 import * as Icons from "./icons";
-import { Dispatch, SetStateAction, useState } from "react";
 
 const clamp = (newValue: number, min: number, max: number) =>
   Math.min(Math.max(newValue, min), max);
@@ -31,8 +37,7 @@ export default function SliderComponent({
   let [value, setValue] = useState(definedValue);
 
   let [isGrabbing, setIsGrabbing] = useState(false);
-  let [isUsingPointer, setisUsingPointer] = useState(false);
-  // let [stash, setStash] = useState({clientX: 0, value});
+  let [isUsingPointer, setIsUsingPointer] = useState(false);
   let [startingClientX, setStartingClientX] = useState(0);
   let [startingValue, setStartingValue] = useState(value);
 
@@ -55,8 +60,25 @@ export default function SliderComponent({
     definedOnValueChange(providedValue);
   };
 
-  console.log({ isUsingPointer });
-  // One more bug when leaving and reentering the window.
+  /* beforeunload testing
+  useEffect(() => {
+    // shortened without space for additional code //
+    // const beforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    // window.addEventListener("beforeunload", beforeUnload);
+    // window.removeEventListener("beforeunload", beforeUnload);
+
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+
+    window.addEventListener("beforeunload", beforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
+  }, []);
+  // https://vercel.com/guides/leave-page-confirmation-dialog-before-unload-nextjs-react
+  */
 
   return (
     <>
@@ -76,7 +98,6 @@ export default function SliderComponent({
           </button>
           <Slider.Root
             name={name}
-            // defaultValue={[50]}
             value={[value]}
             onValueCommit={([value]) => {
               if (!isUsingPointer) updateValue(value);
@@ -93,9 +114,7 @@ export default function SliderComponent({
               }}
               onPointerDown={(event) => {
                 setIsGrabbing(true);
-                setisUsingPointer(true);
-
-                // setStash({clientX: event.clientX, value})
+                setIsUsingPointer(true);
                 setStartingClientX(event.clientX);
                 setStartingValue(value);
               }}
@@ -104,13 +123,13 @@ export default function SliderComponent({
                   let diffInPixels = event.clientX - startingClientX;
                   let sliderWidth = event.currentTarget.clientWidth;
                   let pixelsPerUnit = (max - min) / sliderWidth;
-                  let diffPerUnit = diffInPixels * pixelsPerUnit; // clamp needs be here
+                  let diffPerUnit = diffInPixels * pixelsPerUnit;
 
                   let realDiffPerUnit = clamp(
                     diffPerUnit,
                     min - startingValue,
                     max - startingValue,
-                  ); // that puts me halfway there
+                  );
                   // console.log({ diffPerUnit, realDiffPerUnit });
 
                   setMyStash({
@@ -118,10 +137,10 @@ export default function SliderComponent({
                     previousDiffPerUnit: myStash.currentDiffPerUnit,
                     currentDiffPerUnit: diffPerUnit,
                   });
-                  console.log({
-                    previousDiffPerUnit: myStash.previousDiffPerUnit,
-                    currentDiffPerUnit: myStash.currentDiffPerUnit,
-                  });
+                  // console.log({
+                  //   previousDiffPerUnit: myStash.previousDiffPerUnit,
+                  //   currentDiffPerUnit: myStash.currentDiffPerUnit,
+                  // });
                   setMyDiffies({
                     ...myDiffies,
                     previousDiffyPerUnit:
@@ -138,11 +157,12 @@ export default function SliderComponent({
                               myStash.previousDiffPerUnit,
                           ),
                   });
-                  console.log({
-                    previousDiffyPerUnit: myDiffies.previousDiffyPerUnit,
-                    currentDiffyPerUnit: myDiffies.currentDiffyPerUnit,
-                  });
+                  // console.log({
+                  //   previousDiffyPerUnit: myDiffies.previousDiffyPerUnit,
+                  //   currentDiffyPerUnit: myDiffies.currentDiffyPerUnit,
+                  // });
 
+                  /* original pseudo code */
                   // I want the previous diffPerUnit, and the current diffPerUnit
                   // then I want the diff between them
                   // then if we're outside the bounds and their diff changes direction, we're redefining the startValue
@@ -162,7 +182,7 @@ export default function SliderComponent({
                         myDiffies.currentDiffyPerUnit &&
                       myDiffies.currentDiffyPerUnit === -1)
                   ) {
-                    console.log("Yes.");
+                    // console.log("Yes.");
                     setStartingClientX(event.clientX);
                     setStartingValue(steppedValue);
                   }
@@ -172,12 +192,20 @@ export default function SliderComponent({
               onPointerUp={() => setIsGrabbing(false)}
             >
               <Slider.Range className="absolute h-full">
-                <div className="absolute inset-0 group-has-[:focus-visible]/slider:bg-white"></div>
+                <div
+                  className={`absolute inset-0 ${isUsingPointer ? "" : "group-has-[:focus-visible]/slider:bg-white"}`}
+                ></div>
               </Slider.Range>
             </Slider.Track>
             <Slider.Thumb
               className="opacity-0"
-              onBlur={() => setisUsingPointer(false)}
+              /* debugging the focus/refocus issue */
+              // onFocus={() => console.log("Now focused.")}
+              onBlur={(event) => {
+                /* In effect, when focus-visible is active on an element, though leaving the page removes the focus, the focus returns when entering back the page, which consequently did not trigger back setIsUsingPointer(true). Consequently the focus had to explicitly be removed if we're blurring from the element in any situation while using pointer. */
+                if (isUsingPointer) event.currentTarget.blur();
+                setIsUsingPointer(false);
+              }}
             />
           </Slider.Root>
           <button

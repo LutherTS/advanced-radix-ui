@@ -13,18 +13,17 @@ export default function iOSSliderPage() {
       <div className="mx-auto w-full max-w-xs">
         <form
           action={(formData: FormData) => {
-            alert(`slidervalue: ${formData.get("slidervalue")}`);
+            alert(`volume: ${formData.get("volume")}`);
           }}
           className="space-y-8 rounded"
         >
           <p className="text-sm font-medium text-white/80">Settings</p>
           <Slider
-            name="slidervalue"
+            name="volume"
             definedValue={volume}
             definedOnValueChange={setVolume}
             max={1000}
           />
-          {/* <input type="range" name="myslider" className="w-full" /> */}
           <div className="mt-5 flex items-center justify-between">
             <button
               type="submit"
