@@ -55,6 +55,9 @@ export default function SliderComponent({
     definedOnValueChange(providedValue);
   };
 
+  console.log({ isUsingPointer });
+  // One more bug when leaving and reentering the window.
+
   return (
     <>
       <div className="flex h-5 flex-col justify-center">
