@@ -35,7 +35,7 @@ const getRandomMessage = () => {
   return notifications[randomIndex];
 };
 
-export default function animatedToastPage() {
+export default function AnimatedToastPage() {
   let [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
 
   return (

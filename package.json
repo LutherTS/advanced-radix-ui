@@ -21,6 +21,7 @@
     "react-dom": "19.0.0-rc-58af67a8f8-20240628"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.8",
     "@tailwindcss/forms": "^0.5.7",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -33,5 +34,8 @@
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "dockerfile": {
+    "legacyPeerDeps": true
   }
 }

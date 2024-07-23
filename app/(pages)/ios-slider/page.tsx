@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import Slider from "./slider";
 
-export default function iOSSliderPage() {
+export default function IOSSliderPage() {
   let [volume, setVolume] = useState(60);
   console.log({ volume });
 
