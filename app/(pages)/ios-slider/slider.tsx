@@ -92,7 +92,7 @@ export default function SliderComponent({
             <Icons.SpeakerXMark
               className="size-[25px] hover:!text-white group-focus-visible/speakerx:text-white"
               style={{
-                color: value === 0 ? "white" : undefined,
+                color: value === min ? "white" : undefined,
               }}
             />
           </button>
@@ -216,7 +216,7 @@ export default function SliderComponent({
             <Icons.SpeakerWave
               className="size-[25px] hover:!text-white group-focus-visible/speakerwave:text-white"
               style={{
-                color: value === 100 ? "white" : undefined,
+                color: value === max ? "white" : undefined,
               }}
             />
           </button>
